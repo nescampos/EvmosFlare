@@ -15,6 +15,11 @@
 
 <div class="wrapper">
 	<div class="container" id="main">
+        <div class="row col-12">
+            <div class="alert alert-info">
+                The pools you are seeing are from the mainnet, as there are none available on the testnet.
+            </div>
+        </div>
 		<div class="row gtr-0">
             <div class="col-6"><a href="#" id="filterpools">Filter only my pools</a> <a href="#" id="showpools">Show all pools</a> <br /> </div>
             <br />
@@ -56,11 +61,13 @@
         {
             getXYKPools('diffusion');
             getXYKPools('evmoswap');
+            getXYKPools('cronus');
         }
 
         $('#filterpools').click(function() {
             getXYKPoolsByAddress('diffusion');
             getXYKPoolsByAddress('evmoswap');
+            getXYKPoolsByAddress('cronus');
             return false;
         });
         $('#showpools').click(function() {

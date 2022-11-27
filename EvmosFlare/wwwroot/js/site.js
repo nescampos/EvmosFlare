@@ -13,17 +13,49 @@ $(function () {
         $('#loginMenu').css('display', 'block');
         $('#logoutMenu').css('display', 'none');
     }
+
+    var evmosNetwork = localStorage.getItem('evmosnetwork');
+    if (evmosNetwork != null) {
+        $('#networkEvmos').text(evmosNetwork);
+    }
+    else {
+        $('#networkEvmos').text('Mainnet');
+    }
 })
+
+function changeNetwork() {
+    var evmosNetwork = localStorage.getItem('evmosnetwork');
+    if (evmosNetwork != null) {
+        localStorage.setItem('evmosnetwork', evmosNetwork == 'Testnet'? 'Mainnet':'Testnet');
+    }
+    else {
+        localStorage.setItem('evmosnetwork', 'Testnet');
+    }
+    location.reload();
+}
+
+function getWeb3Provider() {
+    var web3 = new Web3(new Web3.providers.HttpProvider("https://eth.bd.evmos.org:8545"));
+    var evmosNetwork = localStorage.getItem('evmosnetwork');
+    if (evmosNetwork != null && evmosNetwork == 'Testnet') {
+        web3 = new Web3(new Web3.providers.HttpProvider("https://eth.bd.evmos.dev:8545"));
+    }
+    else {
+        web3 = new Web3(new Web3.providers.HttpProvider("https://eth.bd.evmos.org:8545"));
+    }
+    return web3;
+}
 
 var covalentAPI = '';
 
-var web3 = new Web3(new Web3.providers.HttpProvider("https://eth.bd.evmos.org:8545"));
+
 
 var pools = [];
 var myPools = [];
 var balances = [];
 
 function createNewAccount() {
+    var web3 = getWeb3Provider();
     const keyring = web3.eth.accounts.create();
     $('.newAccountPublicKey').text(keyring.address);
     $('.newAccountPrivateKey').text(keyring.privateKey);
@@ -36,6 +68,7 @@ function confirmNewAccount() {
     if (passWord == null) {
         alert('Please, add a new password for your wallet.');
     }
+    var web3 = getWeb3Provider();
     web3.eth.accounts.wallet.clear();
     web3.eth.accounts.wallet.add(privateKey);
     localStorage.setItem('publicKey', publicKey);
@@ -44,7 +77,7 @@ function confirmNewAccount() {
 }
 
 function login() {
-
+    var web3 = getWeb3Provider();
     if (localStorage.getItem('web3js_wallet') == null) {
         alert('You do not have an associated Polygon account. Please register an existing account or create a new.');
     }
@@ -58,6 +91,7 @@ function login() {
 }
 
 function loginExistingAccount() {
+    var web3 = getWeb3Provider();
     var privateKey = $('.privateKeyAccount').val();
     var passWord = $('.newPassword').val();
     if (passWord == null) {
@@ -78,16 +112,22 @@ function logout() {
 }
 
 function getBalances() {
+    var web3 = getWeb3Provider();
     var publicKey = localStorage.getItem('publicKey');
+    var network = localStorage.getItem('evmosnetwork');
+    var urlCovalent = network != null ? (network == 'Mainnet' ? 'https://api.covalenthq.com/v1/9001/address/' : 'https://api.covalenthq.com/v1/9000/address/') : 'https://api.covalenthq.com/v1/9001/address/';
+    
     const settings = {
         "async": true,
         "crossDomain": true,
-        "url": "https://api.covalenthq.com/v1/9001/address/" + publicKey + "/balances_v2/?key=" + covalentAPI,
+        "url": urlCovalent + publicKey + "/balances_v2/?key=" + covalentAPI,
         "method": "GET"
     };
     $.ajax(settings).done(function (response) {
-        var klayToken = response.data.items.find(x => x.contract_ticker_symbol === 'EVMOS');
+        var tokenSymbol = network != null ? (network == 'Mainnet' ? 'EVMOS' : 'PHOTON') : 'EVMOS';
+        var klayToken = response.data.items.find(x => x.contract_ticker_symbol === tokenSymbol);
         var klayBalance = web3.utils.fromWei(klayToken.balance);
+        var urlToken = network != null ? (network == 'Mainnet' ? 'https://evm.evmos.org/token/' : 'https://evm.evmos.dev/token/') : 'https://evm.evmos.org/token/';
         $('#klayBalanceAccount').text(klayBalance);
         var list = document.querySelector('.tokenList');
         var table = document.createElement('table');
@@ -115,7 +155,7 @@ function getBalances() {
         for (j = 0; j < response.data.items.length; j++) {
             var tbodyTr = document.createElement('tr');
             var contractTd = document.createElement('td');
-            var urlToken = "https://evm.evmos.org/token/" + response.data.items[j].contract_address;
+            var urlToken = urlToken + response.data.items[j].contract_address;
             contractTd.innerHTML = "<b> <a href='" + urlToken + "' target='_blank''>" + response.data.items[j].contract_name + "</a></b>";
             tbodyTr.appendChild(contractTd);
             var contractTickerTd = document.createElement('td');
@@ -255,14 +295,16 @@ function renderTable(filter_by_availability) {
 
 function getTransactions() {
     var publicKey = localStorage.getItem('publicKey');
+    var network = localStorage.getItem('evmosnetwork');
+    var urlCovalent = network != null ? (network == 'Mainnet' ? 'https://api.covalenthq.com/v1/9001/address/' : 'https://api.covalenthq.com/v1/9000/address/') : 'https://api.covalenthq.com/v1/9001/address/';
     const settings = {
         "async": true,
         "crossDomain": true,
-        "url": "https://api.covalenthq.com/v1/9001/address/" + publicKey + "/transactions_v2/?quote-currency=USD&format=JSON&block-signed-at-asc=false&no-logs=false&page-number=0&key=" + covalentAPI,
+        "url": urlCovalent + publicKey + "/transactions_v2/?quote-currency=USD&format=JSON&block-signed-at-asc=false&no-logs=false&page-number=0&key=" + covalentAPI,
         "method": "GET"
     };
     $.ajax(settings).done(function (response) {
-
+        var urlToken = network != null ? (network == 'Mainnet' ? 'https://evm.evmos.org/tx/' : 'https://evm.evmos.dev/tx/') : 'https://evm.evmos.org/tx/';
         if (response.data.items.length == 0) {
             $('#noTransactions').css('display', 'block');
             $('#noTransactions').text('There is no transaction for this address.');
@@ -286,7 +328,7 @@ function getTransactions() {
             contractTickerHeader.innerHTML = 'To Address';
             theadTr.appendChild(contractTickerHeader);
             var balanceHeader = document.createElement('td');
-            balanceHeader.innerHTML = 'Amount (in EVMOS)';
+            balanceHeader.innerHTML = 'Amount';
             theadTr.appendChild(balanceHeader);
             var usdHeader = document.createElement('td');
             usdHeader.innerHTML = 'USD';
@@ -302,7 +344,7 @@ function getTransactions() {
             for (j = 0; j < response.data.items.length; j++) {
                 var tbodyTr = document.createElement('tr');
                 var contractTd = document.createElement('td');
-                var url = "https://evm.evmos.org/tx/" + response.data.items[j].tx_hash;
+                var url = urlToken + response.data.items[j].tx_hash;
                 contractTd.innerHTML = "<b><a href='" + url + "' target='_blank'>" + response.data.items[j].tx_hash.substring(0, 10) + "...</a></b>";
                 tbodyTr.appendChild(contractTd);
                 var contractFromTickerTd = document.createElement('td');
@@ -330,6 +372,7 @@ function getTransactions() {
 }
 
 function sendTransaction() {
+    var web3 = getWeb3Provider();
     var recipient = $('#trx_address').val();
     if (recipient == '') {
         $('#errorTrx').css("display", "block");

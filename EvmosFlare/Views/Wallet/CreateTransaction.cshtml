@@ -17,8 +17,14 @@
 	</ul>
 }
 
-<br /><br /><br />
-	<div class="row">
+<div class="wrapper">
+	<div class="container" id="main">
+        <div class="row col-12">
+            <div class="alert alert-info">
+                You are in the <span id="networkEvmos"></span>. Click <a href="#" id="changeNetworkLink">here</a> if you want to change to the other network.
+            </div>
+        </div>
+		<div class="row">
 		<div class="col-2">
 			<p><br /></p>
 		</div>
@@ -79,6 +85,10 @@
 			<p class="alert alert-warning" id="errorTrx"></p>
 		</div>
 	</div>
+						
+	</div>
+</div>
+
 
 
 
@@ -89,5 +99,8 @@
         if(publicKey == null) {
             location.href = "/Home/Login";
         }
+		$('#changeNetworkLink').click(function() {
+            changeNetwork();
+        });
     </script>
 }

@@ -19,6 +19,11 @@
 
 <div class="wrapper">
 	<div class="container" id="main">
+        <div class="row col-12">
+            <div class="alert alert-info">
+                You are in the <span id="networkEvmos"></span>. Click <a href="#" id="changeNetworkLink">here</a> if you want to change to the other network.
+            </div>
+        </div>
 		<div class="row gtr-0">
             <div class="col-12-narrower">
                 <p class="alert alert-warning" id="noTransactions"></p>
@@ -47,6 +52,8 @@
         {
             getTransactions();
         }
-
+        $('#changeNetworkLink').click(function() {
+            changeNetwork();
+        });
     </script>
 }
